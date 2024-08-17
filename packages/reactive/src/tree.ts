@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { ObModelSymbol, ObModelNodeSymbol, RawNode } from './environment'
 import { raw as getRaw } from './externals'
 import { PropertyKey, IOperation } from './types'

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { define, observable, batch, action, observe } from '@formily/reactive'
 import {
   FormPath,
@@ -139,12 +140,24 @@ export class Form<ValueType extends object = any> {
       errors: observable.computed,
       warnings: observable.computed,
       successes: observable.computed,
+      // NOTE: 依赖display状态
       hidden: observable.computed,
       visible: observable.computed,
+      // NOTE: 依赖pattern状态
       editable: observable.computed,
       readOnly: observable.computed,
       readPretty: observable.computed,
       disabled: observable.computed,
+
+      //
+      /**
+       * NOTE:
+       * 以下方法可能会触发响应式数据的getter，但getter触发时，若有外部reaction，不需要相互绑定。
+       * 一般这些设置方法执行时是事件触发的，此时外部没有reaction，如果有，则参考下文分析
+       * eg: react场景下 onFiledMount中调用setSubmitting(!field.submitting)，此时触发了field.submitting的getter和setter逻辑
+       * 但如果其他地方没有用过field.submitting，那么这个属性的变化，就没必要触发组件的重新渲染，所以reaction此时不要手机依赖，即设计成action形式
+       * action主要处理的是getter逻辑
+       */
       setValues: action,
       setValuesIn: action,
       setInitialValues: action,
@@ -159,6 +172,13 @@ export class Form<ValueType extends object = any> {
       reset: action,
       submit: action,
       validate: action,
+
+      /**
+       *  NOTE:
+       * 生命周期函数，会在render时执行，设置成batch，若生命周期内有多个响应式数据设置操作，等生命周期结束，才触发reaction执行。
+       * 实际上在react组件都是异步render的情况下，这个batch可以省略。但是低版本react可能会出现同步render的情况，所以这里还是保留
+       * batch主要处理的是setter逻辑
+       * */
       onMount: batch,
       onUnmount: batch,
       onInit: batch,
@@ -170,6 +190,7 @@ export class Form<ValueType extends object = any> {
       observe(
         this,
         (change) => {
+          // NOTE: form上任何响应式数据变化，都会触发这里，下面两个触发器会自动过滤不相关的响应式数据变化
           triggerFormInitialValuesChange(this, change)
           triggerFormValuesChange(this, change)
         },
@@ -241,6 +262,7 @@ export class Form<ValueType extends object = any> {
   set editable(editable) {
     if (!isValid(editable)) return
     if (editable) {
+      // NOTE: 这里修改，会通知相关计算属性的reaction，导致计算属性重新计算
       this.pattern = 'editable'
     } else {
       this.pattern = 'readPretty'

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import {
   bindTargetKeyWithCurrentReaction,
   runReactionsFromTargetKey,
@@ -168,13 +169,16 @@ export const collectionHandlers = {
 
 export const baseHandlers: ProxyHandler<any> = {
   get(target, key, receiver) {
+    // debugger
     if (!key) return
     const result = target[key] // use Reflect.get is too slow
     if (typeof key === 'symbol' && wellKnownSymbols.has(key)) {
       return result
     }
+    // NOTE: 将target和key绑定到当前的reaction中，并且构建维持响应式的数据结构
     bindTargetKeyWithCurrentReaction({ target, key, receiver, type: 'get' })
     const observableResult = RawProxy.get(result)
+
     if (observableResult) {
       return observableResult
     }
@@ -184,6 +188,7 @@ export const baseHandlers: ProxyHandler<any> = {
         !descriptor ||
         !(descriptor.writable === false && descriptor.configurable === false)
       ) {
+        // NOTE: 如果result也是对象，将它变成响应式数据，加入到 ProxyRaw 和 RawProxy 中
         return createObservable(target, key, result)
       }
     }
@@ -206,6 +211,8 @@ export const baseHandlers: ProxyHandler<any> = {
       return true
     }
     const hadKey = hasOwnProperty.call(target, key)
+
+    // NOTE: 这里不一定是新创建，会先从ProxyRaw中获取，如果没有再创建
     const newValue = createObservable(target, key, value)
     const oldValue = target[key]
     target[key] = newValue // use Reflect.set is too slow
@@ -219,6 +226,7 @@ export const baseHandlers: ProxyHandler<any> = {
         type: 'add',
       })
     } else if (value !== oldValue) {
+      // NOTE: 触发批量更新，执行和key相关的reactions
       runReactionsFromTargetKey({
         target,
         key,

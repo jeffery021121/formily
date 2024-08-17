@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { IOperation } from './types'
 import { ObserverListeners } from './environment'
 import { raw as getRaw } from './externals'
@@ -11,17 +12,24 @@ export const observe = (
 ) => {
   const addListener = (target: any) => {
     const raw = getRaw(target)
+
+    // NOTE: 初始侦测对象
     const node = getDataNode(raw)
 
     const listener = (operation: IOperation) => {
+      // NOTE: 本函数在任何一个reaction执行时，都会触发。
       const targetRaw = getRaw(operation.target)
       const targetNode = getDataNode(targetRaw)
+
       if (deep) {
+        // NOTE: 过滤不相关target
         if (node.contains(targetNode)) {
           observer(new DataChange(operation, targetNode))
           return
         }
       }
+
+      // NOTE: 过滤不相关target
       if (
         node === targetNode ||
         (node.targetRaw === targetRaw && node.key === operation.key)

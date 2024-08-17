@@ -23,6 +23,7 @@ export const autorun = (tracker: Reaction, name = 'AutoRun') => {
     if (ReactionStack.indexOf(reaction) === -1) {
       releaseBindingReactions(reaction)
       try {
+        // NOTE: 这里开启batch，是为了防抖，本reaction可能会多次触发，加入batch，就会合并多次触发，因为PendingReactions是set结构，自动去重
         batchStart()
         ReactionStack.push(reaction)
         tracker()
@@ -136,6 +137,7 @@ export const reaction = <T>(
       }
     }
   }
+  // NOTE: _scheduler的参数是reaction
   reaction._scheduler = (looping) => {
     looping()
     if (dirtyCheck()) fireAction()

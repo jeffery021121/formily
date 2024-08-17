@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { FormPath } from '@formily/shared'
 import { Form } from '../models'
 import { IFormProps } from '../types'

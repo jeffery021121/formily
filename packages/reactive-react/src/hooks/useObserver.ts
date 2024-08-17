@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { Tracker } from '@formily/reactive'
 import { IObserverOptions } from '../types'
 import { useForceUpdate } from './useForceUpdate'
@@ -8,6 +9,8 @@ export const useObserver = <T extends () => any>(
   options?: IObserverOptions
 ): ReturnType<T> => {
   const forceUpdate = useForceUpdate()
+  // const [, setState] = useState([])
+  // const forceUpdate = () => setState([])
   const tracker = useCompatFactory(
     () =>
       new Tracker(() => {

@@ -15,6 +15,7 @@ export const box: IBox = createAnnotation(({ target, key, value }) => {
     value: target ? target[key] : value,
   }
 
+  // NOTE: 这个proxy是一个普通对象，不是一个响应式对象。而且只实现了get和set方法，算是一种另类的Object.defineProperty
   const proxy = {
     set,
     get,

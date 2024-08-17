@@ -14,6 +14,7 @@ export class Tracker {
     scheduler?: (reaction: Reaction) => void,
     name = 'TrackerReaction'
   ) {
+    // NOTE: 一般来说，scheduler里的callback就是个forceUpdate函数(setState([]))，用于触发组件的重新渲染。
     this.track._scheduler = (callback) => {
       if (this.track._boundary === 0) this.dispose()
       if (isFn(callback)) scheduler(callback)
@@ -22,6 +23,7 @@ export class Tracker {
     this.track._boundary = 0
   }
 
+  // NOTE: 和autorun基本一致。和auto的区别是，这里不会自动先执行一次reaction。
   track: Reaction = (tracker: Reaction) => {
     if (!isFn(tracker)) return this.results
     if (this.track._boundary > 0) return

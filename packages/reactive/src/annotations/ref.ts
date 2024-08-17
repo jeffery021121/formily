@@ -31,6 +31,7 @@ export const ref: IRef = createAnnotation(({ target, key, value }) => {
 
   function set(value: any) {
     const oldValue = store.value
+    // NOTE: 由于我们主观认为ref的value是一个普通值，所以不需要再次调用createObservable
     store.value = value
     if (oldValue !== value) {
       runReactionsFromTargetKey({

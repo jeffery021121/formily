@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { isFn } from './checkers'
 import { ArraySet } from './array'
 import { IOperation, ReactionsMap, Reaction, PropertyKey } from './types'
@@ -56,6 +57,7 @@ const getReactionsFromTargetKey = (target: any, key: PropertyKey) => {
   const reactionsMap = RawReactionsMap.get(target)
   const reactions = []
   if (reactionsMap) {
+    // NOTE: 这里其实是arraySet
     const map = reactionsMap.get(key)
     if (map) {
       map.forEach((reaction) => {
@@ -75,10 +77,13 @@ const runReactions = (target: any, key: PropertyKey) => {
   for (let i = 0, len = reactions.length; i < len; i++) {
     const reaction = reactions[i]
     if (reaction._isComputed) {
+      // NOTE: 计算属性不用管batch逻辑
       reaction._scheduler(reaction)
     } else if (isScopeBatching()) {
+      // NOTE: scopeBatch的reaction，不需要防抖，直接执行
       PendingScopeReactions.add(reaction)
     } else if (isBatching()) {
+      // NOTE: 因为批量更新，所有reaction都进入了这里
       PendingReactions.add(reaction)
     } else {
       // never reach
@@ -107,7 +112,15 @@ export const bindTargetKeyWithCurrentReaction = (operation: IOperation) => {
   if (isUntracking()) return
   if (current) {
     DependencyCollected.value = true
-    addReactionsMapToReaction(current, addRawReactionsMap(target, key, current))
+
+    // NOTE: 构建并返回reactionsMap，同时把reactionsMap添加到RawReactionsMap中
+    const reactionsMap = addRawReactionsMap(target, key, current)
+
+    // NOTE: 把reactionsMap添加到reaction._reactionsSet中
+    addReactionsMapToReaction(current, reactionsMap)
+
+    // NOTE: 使用 demo3，演示reaction为何要重新绑定响应式对象
+    // console.log('reaction._reactionsSet', current._reactionsSet)
   }
 }
 
@@ -127,6 +140,7 @@ export const bindComputedReactions = (reaction: Reaction) => {
 
 export const runReactionsFromTargetKey = (operation: IOperation) => {
   let { key, type, target, oldTarget } = operation
+  // NOTE: 开启批量更新
   batchStart()
   notifyObservers(operation)
   if (type === 'clear') {
@@ -134,12 +148,14 @@ export const runReactionsFromTargetKey = (operation: IOperation) => {
       runReactions(target, key)
     })
   } else {
+    // NOTE: 找到和key相关的reactions，放入PendingReactions中
     runReactions(target, key)
   }
   if (type === 'add' || type === 'delete' || type === 'clear') {
     const newKey = Array.isArray(target) ? 'length' : ITERATION_KEY
     runReactions(target, newKey)
   }
+  // NOTE: 结束批量更新，执行PendingReactions中的所有reaction
   batchEnd()
 }
 
@@ -149,6 +165,7 @@ export const hasRunningReaction = () => {
 
 export const releaseBindingReactions = (reaction: Reaction) => {
   reaction._reactionsSet?.forEach((reactionsMap) => {
+    // debugger
     reactionsMap.forEach((reactions) => {
       reactions.delete(reaction)
     })
@@ -225,6 +242,7 @@ export const isScopeBatching = () => BatchScope.value
 export const isUntracking = () => UntrackCount.value > 0
 
 export const executePendingReactions = () => {
+  // NOTE: 执行所有的reaction，优先执行reaction的调度器
   PendingReactions.batchDelete((reaction) => {
     if (isFn(reaction._scheduler)) {
       reaction._scheduler(reaction)

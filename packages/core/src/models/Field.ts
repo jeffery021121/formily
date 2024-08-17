@@ -469,9 +469,7 @@ export class Field<
       }
       return getValuesFromEvent(args)
     }
-
     if (!isHTMLInputEventFromSelf(args)) return
-
     const values = getValues(args)
     const value = values[0]
     this.caches.inputting = true

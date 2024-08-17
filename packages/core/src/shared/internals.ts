@@ -725,6 +725,7 @@ export const triggerFormInitialValuesChange = (
 
 export const triggerFormValuesChange = (form: Form, change: DataChange) => {
   if (Array.isArray(change.object) && change.key === 'length') return
+  // NOTE: 过滤非value变更
   if (
     (contains(form.values, change.object) || form.values === change.value) &&
     form.initialized

@@ -8,6 +8,11 @@ export interface IObservable {
   <T>(target: T): T
 }
 
+/**
+ * NOTE:
+ * 相比于 ../observable.ts 的实现，这里在store.value的响应式定义多了target和key
+ * get,set 和 baseHandlers 中的 get,set 基本一致
+ */
 export const observable: IObservable = createAnnotation(
   ({ target, key, value }) => {
     const store = {

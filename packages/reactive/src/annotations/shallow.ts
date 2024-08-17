@@ -5,6 +5,7 @@ import {
 } from '../reaction'
 import { IObservable } from './observable'
 
+// NOTE: 这里的shallow和observable的实现基本一致，只是在createObservable时多了一个参数，用于标识是否是shallow。
 export const shallow: IObservable = createAnnotation(
   ({ target, key, value }) => {
     const store = {

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { isFn } from './checkers'
 import { buildDataTree } from './tree'
 import { observable } from './observable'
@@ -17,6 +18,7 @@ export function define<Target extends object = any>(
   buildDataTree(undefined, undefined, target)
   for (const key in annotations) {
     const annotation = annotations[key]
+    // NOTE: 没有使用annotation，而是直接使用了annotation的maker函数
     if (isAnnotation(annotation)) {
       getObservableMaker(annotation)({
         target,
